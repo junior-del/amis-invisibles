@@ -226,7 +226,8 @@
           Entrez votre prénom pour participer au tirage des amis invisibles.
         </p>
         <input type="text" id="participantName" placeholder="Votre prénom…" maxlength="40"
-          oninput="onNameInput()" onkeydown="if(event.key==='Enter')registerParticipant()">
+          oninput="onNameInput()" onkeydown="if(event.key==='Enter')registerParticipant()"
+          pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s\-]+" title="Le prénom ne doit contenir que des lettres">
         <div class="gap"></div>
         <button class="btn btn-gold" id="btnRegister" onclick="registerParticipant()" disabled>
           🎁 Je m'inscris !
@@ -461,9 +462,17 @@ window.setMode = function(m){
 // PARTICIPANT REGISTRATION
 // ══════════════════════════════════════════════════
 window.onNameInput = function(){
-  const v = document.getElementById('participantName').value.trim();
+  const field = document.getElementById('participantName');
+  // Remove any character that is not a letter, space or hyphen (including accented chars)
+  const cleaned = field.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\-]/g, '');
+  if(field.value !== cleaned){
+    field.value = cleaned;
+    showAlert('regError', '⚠️ Le prénom ne doit contenir que des lettres.');
+  } else {
+    hideAlerts('regError','regSuccess');
+  }
+  const v = cleaned.trim();
   document.getElementById('btnRegister').disabled = v.length < 2;
-  hideAlerts('regError','regSuccess');
 };
 
 window.registerParticipant = async function(){
@@ -503,7 +512,7 @@ function renderParticipantList(participants, isAdmin){
   if(!isAdmin){
     // Participant view: show count only, no names
     document.getElementById('progText').textContent = `${count} inscrit${count!==1?'s':''}`;
-    document.getElementById('progPct').textContent  = TOTAL_EXPECTED>0 ? `${count} / ${TOTAL_EXPECTED}` : '';
+    document.getElementById('progPct').textContent  = '';
     document.getElementById('progFill').style.width = Math.min(pct,100)+'%';
     const numEl = document.getElementById('countNumber');
     if(numEl) numEl.textContent = count;
