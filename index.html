@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amis Invisibles 🚴 Petpenoun</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0818; --surface:#17102b; --card:#1f1638; --border:rgba(245,200,66,.15);
+    --gold:#f5c842; --gold2:#ffaa30; --pink:#f06292; --teal:#4dd0c4;
+    --purple:#b39ddb; --text:#f0e6ff; --muted:#7a6a9a; --green:#66bb6a; --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  #bgStars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .star{position:absolute;background:white;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite alternate;opacity:var(--o,.4)}
+  @keyframes twinkle{from{opacity:var(--o)}to{opacity:calc(var(--o)*0.15)}}
+  .bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 70% 40% at 15% 5%,rgba(245,200,66,.07) 0%,transparent 70%),
+      radial-gradient(ellipse 50% 50% at 85% 95%,rgba(77,208,196,.05) 0%,transparent 70%)}
+
+  .app{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:32px 18px 80px}
+
+  /* HEADER */
+  .hdr{text-align:center;margin-bottom:36px}
+  .hdr-bike{font-size:2.2rem;display:inline-block;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .hdr h1{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;
+    background:linear-gradient(135deg,var(--gold) 0%,var(--gold2) 50%,var(--pink) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin:6px 0 4px;line-height:1.1}
+  .hdr p{font-size:.88rem;color:var(--muted)}
+
+  /* SETUP BANNER */
+  .setup-banner{background:linear-gradient(135deg,rgba(240,98,146,.15),rgba(179,157,219,.1));
+    border:1px solid rgba(240,98,146,.3);border-radius:var(--r);padding:20px 22px;margin-bottom:22px}
+  .setup-banner h3{color:var(--pink);font-size:1rem;margin-bottom:10px}
+  .setup-banner p,.setup-banner li{font-size:.85rem;color:var(--text);line-height:1.6}
+  .setup-banner ol{padding-left:18px;margin:8px 0}
+  .setup-banner li{margin-bottom:4px}
+  .setup-banner code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font-size:.82rem;color:var(--gold)}
+  .setup-banner a{color:var(--teal);text-decoration:none}
+  .setup-banner a:hover{text-decoration:underline}
+
+  /* CARD */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+    padding:26px;margin-bottom:20px;box-shadow:0 4px 40px rgba(0,0,0,.35)}
+  .section-label{font-size:.7rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+  /* INPUTS */
+  input[type=text],input[type=password]{width:100%;background:var(--surface);border:1.5px solid var(--border);
+    border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;
+    padding:12px 16px;outline:none;transition:border-color .2s}
+  input:focus{border-color:var(--gold)}
+  input::placeholder{color:var(--muted)}
+
+  /* BUTTONS */
+  .btn{width:100%;padding:14px;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;
+    font-size:1rem;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s,opacity .15s}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1005;box-shadow:0 4px 18px rgba(245,200,66,.3)}
+  .btn-gold:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 26px rgba(245,200,66,.4)}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--muted)}
+  .btn-outline:hover{border-color:var(--gold);color:var(--gold);background:rgba(245,200,66,.05)}
+  .btn-sm{width:auto;padding:8px 16px;font-size:.82rem}
+  .btn-copy{background:rgba(77,208,196,.12);border:1px solid rgba(77,208,196,.3);border-radius:8px;
+    color:var(--teal);padding:7px 14px;font-size:.8rem;font-weight:500;cursor:pointer;
+    transition:background .2s,transform .1s;white-space:nowrap}
+  .btn-copy:hover{background:rgba(77,208,196,.22)}
+  .btn-copy.copied{background:rgba(102,187,106,.15);border-color:rgba(102,187,106,.4);color:var(--green)}
+
+  /* ALERTS */
+  .alert{border-radius:10px;padding:12px 16px;font-size:.88rem;margin-top:10px;display:none}
+  .alert.show{display:block}
+  .alert-err{background:rgba(240,98,146,.1);border:1px solid rgba(240,98,146,.3);color:var(--pink)}
+  .alert-ok{background:rgba(102,187,106,.1);border:1px solid rgba(102,187,106,.3);color:var(--green)}
+  .alert-info{background:rgba(179,157,219,.1);border:1px solid rgba(179,157,219,.3);color:var(--purple)}
+
+  /* PARTICIPANT LIST */
+  .plist{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px;margin:14px 0}
+  .plist::-webkit-scrollbar{width:4px}
+  .plist::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  .p-chip{background:var(--surface);border:1px solid var(--border);border-radius:9px;
+    padding:10px 14px;display:flex;align-items:center;gap:10px;
+    animation:slideIn .3s ease both;font-size:.92rem}
+  @keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+  .p-name{flex:1;font-weight:500}
+  .p-time{font-size:.75rem;color:var(--muted)}
+  .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.95rem;
+    padding:2px 4px;border-radius:4px;transition:color .2s,background .2s}
+  .del-btn:hover{color:var(--pink);background:rgba(240,98,146,.1)}
+  .empty-state{text-align:center;padding:28px;color:var(--muted);font-size:.9rem}
+
+  /* PROGRESS */
+  .prog-wrap{margin:14px 0 4px}
+  .prog-label{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+  .prog-bar{height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:3px;transition:width .5s ease}
+
+  /* PAIRS */
+  .pairs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:14px}
+  .pair-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+    padding:13px 15px;display:flex;align-items:center;gap:10px;
+    animation:slideIn .35s ease both;position:relative;overflow:hidden}
+  .pair-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,var(--gold),var(--pink));border-radius:3px 0 0 3px}
+  .pair-num{font-size:.7rem;font-weight:700;color:var(--muted);min-width:18px;text-align:center}
+  .pair-giver{font-weight:600;font-size:.9rem;flex:1}
+  .pair-arr{color:var(--pink);font-size:.9rem}
+  .pair-recv{font-weight:600;font-size:.9rem;flex:1;color:var(--teal);text-align:right}
+  .pair-cp{background:none;border:none;cursor:pointer;font-size:.95rem;opacity:.45;
+    transition:opacity .2s,transform .15s;padding:2px 4px}
+  .pair-cp:hover{opacity:1;transform:scale(1.15)}
+
+  /* WA */
+  .wa-msg{background:#075e54;border-radius:11px;padding:14px 16px;font-size:.85rem;
+    line-height:1.65;color:#e8f5e9;margin-top:10px;word-break:break-word}
+  .wa-msg::before{content:'💬 Message WhatsApp';display:block;font-size:.68rem;font-weight:600;
+    letter-spacing:1.5px;text-transform:uppercase;color:rgba(232,245,233,.45);margin-bottom:7px}
+  .wa-actions{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+
+  /* ORB */
+  .orb-wrap{text-align:center;padding:32px 0}
+  .orb{width:110px;height:110px;margin:0 auto 20px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,var(--gold),var(--gold2),#b8860b);
+    box-shadow:0 0 40px rgba(245,200,66,.4),0 0 80px rgba(245,200,66,.15);
+    display:flex;align-items:center;justify-content:center;font-size:2.8rem;
+    animation:pulseOrb 1.5s ease-in-out infinite;cursor:pointer;transition:transform .2s}
+  .orb:hover{transform:scale(1.07)}
+  @keyframes pulseOrb{
+    0%,100%{box-shadow:0 0 40px rgba(245,200,66,.4),0 0 80px rgba(245,200,66,.15)}
+    50%{box-shadow:0 0 60px rgba(245,200,66,.6),0 0 120px rgba(245,200,66,.25)}}
+
+  /* SPINNER */
+  .spinner-wrap{display:none;justify-content:center;padding:16px}
+  .spinner-wrap.show{display:flex}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* MODE TOGGLE */
+  .mode-toggle{display:flex;gap:10px;margin-bottom:28px}
+  .mode-btn{flex:1;padding:11px;border:1.5px solid var(--border);border-radius:10px;
+    background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;
+    font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s}
+  .mode-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(245,200,66,.07)}
+
+  /* STATUS DOT */
+  .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .status-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .status-dot.offline{background:var(--pink)}
+
+  /* CONFETTI */
+  .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;
+    z-index:999;animation:cfall var(--dur) ease-in forwards}
+  @keyframes cfall{0%{transform:translateY(-20px) rotate(0deg) scale(1);opacity:1}
+    100%{transform:translateY(100vh) rotate(720deg) scale(.5);opacity:0}}
+
+  .gap{height:14px}
+  @media(max-width:480px){.pairs-grid{grid-template-columns:1fr}.card{padding:18px}}
+</style>
+</head>
+<body>
+
+<div id="bgStars"></div>
+<div class="bg-glow"></div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-bike">🚴</div>
+    <h1>Amis Invisibles</h1>
+    <p>Balade à Vélo · Domaine de Petpenoun · 15 Mai 2026</p>
+  </div>
+
+  <!-- FIREBASE SETUP BANNER (caché après config) -->
+  <div class="setup-banner" id="setupBanner">
+    <h3>⚙️ Configuration Firebase requise (5 min, gratuit)</h3>
+    <p>Pour que l'app fonctionne en ligne, vous devez créer une base de données Firebase gratuite :</p>
+    <ol>
+      <li>Allez sur <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></li>
+      <li>Cliquez <strong>"Ajouter un projet"</strong> → nommez-le <code>amis-invisibles</code> → Continuer</li>
+      <li>Dans le menu gauche → <strong>Realtime Database</strong> → <strong>"Créer une base de données"</strong></li>
+      <li>Choisissez <strong>"Commencer en mode test"</strong> → Activer</li>
+      <li>Dans <strong>Paramètres du projet</strong> (⚙️) → <strong>"Ajouter une app Web"</strong> (icône &lt;/&gt;)</li>
+      <li>Copiez les valeurs <code>apiKey</code>, <code>authDomain</code>, <code>databaseURL</code>, <code>projectId</code></li>
+      <li>Collez-les dans le panneau ci-dessous 👇</li>
+    </ol>
+
+    <div class="gap"></div>
+    <div style="display:grid;gap:10px">
+      <input type="text" id="cfg_apiKey"      placeholder="apiKey : AIzaSy...">
+      <input type="text" id="cfg_authDomain"  placeholder="authDomain : mon-projet.firebaseapp.com">
+      <input type="text" id="cfg_databaseURL" placeholder="databaseURL : https://mon-projet-default-rtdb.firebaseio.com">
+      <input type="text" id="cfg_projectId"   placeholder="projectId : mon-projet">
+    </div>
+    <div class="gap"></div>
+    <button class="btn btn-gold" onclick="saveConfig()">✅ Enregistrer et démarrer</button>
+    <div class="alert alert-err" id="cfgError"></div>
+  </div>
+
+  <!-- APP (masqué jusqu'à config Firebase) -->
+  <div id="mainApp" style="display:none">
+
+    <!-- CONNECTION STATUS -->
+    <div style="text-align:right;margin-bottom:12px;font-size:.78rem;color:var(--muted)">
+      <span class="status-dot" id="statusDot"></span><span id="statusText">Connexion…</span>
+    </div>
+
+    <!-- MODE TOGGLE -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" onclick="setMode('participant')" id="modeParticipant">👤 Participant</button>
+      <button class="mode-btn" onclick="setMode('admin')" id="modeAdmin">🔐 Admin</button>
+    </div>
+
+    <!-- ══ PARTICIPANT VIEW ══ -->
+    <div id="viewParticipant">
+      <div class="card">
+        <div class="section-label">✋ Mon inscription</div>
+        <p style="font-size:.9rem;color:var(--muted);margin-bottom:16px">
+          Entrez votre prénom pour participer au tirage des amis invisibles.
+        </p>
+        <input type="text" id="participantName" placeholder="Votre prénom…" maxlength="40"
+          oninput="onNameInput()" onkeydown="if(event.key==='Enter')registerParticipant()">
+        <div class="gap"></div>
+        <button class="btn btn-gold" id="btnRegister" onclick="registerParticipant()" disabled>
+          🎁 Je m'inscris !
+        </button>
+        <div class="alert alert-err" id="regError"></div>
+        <div class="alert alert-ok"  id="regSuccess"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">👥 Inscriptions</div>
+        <div class="prog-wrap">
+          <div class="prog-label">
+            <span id="progText">En attente…</span>
+            <span id="progPct"></span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        </div>
+        <div style="text-align:center;padding:22px 0 12px">
+          <div style="font-size:3.2rem;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;line-height:1" id="countNumber">0</div>
+          <div style="font-size:.85rem;color:var(--muted);margin-top:6px">participant(s) inscrit(s)</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;opacity:.6">🔒 La liste des noms est visible uniquement par l'organisateur</div>
+        </div>
+        <div class="alert alert-info show" style="margin-top:0">
+          ⏳ Le tirage sera lancé par l'organisateur une fois tout le monde inscrit. Confirmez votre inscription par WhatsApp !
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN VIEW ══ -->
+    <div id="viewAdmin" style="display:none">
+
+      <div class="card" id="adminLogin">
+        <div class="section-label">🔐 Accès organisateur</div>
+        <input type="password" id="adminPwd" placeholder="Mot de passe admin…"
+          onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <div class="gap"></div>
+        <button class="btn btn-gold" onclick="doAdminLogin()">Connexion</button>
+        <div class="alert alert-err" id="loginError"></div>
+      </div>
+
+      <div id="adminDashboard" style="display:none">
+
+        <div class="card">
+          <div class="section-label">📋 Liste des inscrits</div>
+          <div class="prog-wrap">
+            <div class="prog-label">
+              <span id="adminProgText">Chargement…</span>
+              <span id="adminProgPct"></span>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" id="adminProgFill" style="width:0%"></div></div>
+          </div>
+          <div class="plist" id="adminParticipantList"></div>
+          <div class="gap"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm"
+              style="color:var(--pink);border-color:rgba(240,98,146,.3)"
+              onclick="clearAll()">🗑 Réinitialiser tout</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-label">🎲 Tirage au sort</div>
+          <div class="orb-wrap" id="orbWrap">
+            <div class="orb" onclick="executeDraw()">🎁</div>
+            <p style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);margin-bottom:6px">
+              Prêt à tirer les paires ?
+            </p>
+            <p style="font-size:.85rem;color:var(--muted)">Cliquez sur la sphère pour lancer le sort</p>
+          </div>
+          <div class="spinner-wrap" id="drawSpinner"><div class="spinner"></div></div>
+          <div id="drawResults" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+              <span style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold)">✨ Paires révélées !</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn-copy" id="btnCopyAll" onclick="copyAll()">📋 Tout copier</button>
+                <button class="btn btn-outline btn-sm" onclick="redraw()">↺ Retirer</button>
+              </div>
+            </div>
+            <div class="pairs-grid" id="pairsList"></div>
+          </div>
+        </div>
+
+        <div class="card" id="waSection" style="display:none">
+          <div class="section-label">💬 Messages WhatsApp</div>
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">
+            Copiez et envoyez chaque message en privé à son destinataire. 🤫
+          </p>
+          <div id="waList"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /mainApp -->
+</div><!-- /app -->
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, push, remove, onValue, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ══════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════
+const ADMIN_PWD      = "petpenoun2026";   // ← Changez ce mot de passe
+const TOTAL_EXPECTED = 38;               // ← Nombre de participants attendus
+
+// ── Stars ─────────────────────────────────────────
+(function(){
+  const c=document.getElementById('bgStars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*2.5+.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.2+Math.random()*.6};animation-delay:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+})();
+
+// ── Firebase state ────────────────────────────────
+let db = null;
+let _pairs = [];
+let unsubParticipants = null;
+let unsubPairs = null;
+
+// ── Helpers ───────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(iso){ try{return new Date(iso).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}catch{return ''} }
+function showAlert(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.classList.add('show'); }
+function hideAlerts(...ids){ ids.forEach(id=>{ const el=document.getElementById(id); if(el){el.classList.remove('show');el.textContent='';} }); }
+
+// ══════════════════════════════════════════════════
+// FIREBASE CONFIG SAVE
+// ══════════════════════════════════════════════════
+window.saveConfig = function() {
+  const apiKey      = document.getElementById('cfg_apiKey').value.trim();
+  const authDomain  = document.getElementById('cfg_authDomain').value.trim();
+  const databaseURL = document.getElementById('cfg_databaseURL').value.trim();
+  const projectId   = document.getElementById('cfg_projectId').value.trim();
+
+  if(!apiKey || !authDomain || !databaseURL || !projectId){
+    showAlert('cfgError','⚠️ Veuillez remplir tous les champs.');
+    return;
+  }
+  if(!databaseURL.startsWith('https://')){
+    showAlert('cfgError','⚠️ Le databaseURL doit commencer par https://');
+    return;
+  }
+
+  // Save to localStorage for next visits
+  localStorage.setItem('fb_cfg', JSON.stringify({apiKey,authDomain,databaseURL,projectId}));
+  initFirebase({apiKey,authDomain,databaseURL,projectId});
+};
+
+function tryLoadSavedConfig(){
+  const saved = localStorage.getItem('fb_cfg');
+  if(saved){
+    try{
+      const cfg = JSON.parse(saved);
+      // Pre-fill fields
+      document.getElementById('cfg_apiKey').value      = cfg.apiKey||'';
+      document.getElementById('cfg_authDomain').value  = cfg.authDomain||'';
+      document.getElementById('cfg_databaseURL').value = cfg.databaseURL||'';
+      document.getElementById('cfg_projectId').value   = cfg.projectId||'';
+      initFirebase(cfg);
+    } catch(e){ localStorage.removeItem('fb_cfg'); }
+  }
+}
+
+function initFirebase(cfg){
+  try{
+    const app = initializeApp(cfg);
+    db = getDatabase(app);
+    document.getElementById('setupBanner').style.display = 'none';
+    document.getElementById('mainApp').style.display = '';
+    setStatus(true);
+    startListening();
+  } catch(e){
+    showAlert('cfgError','❌ Erreur de configuration Firebase : '+e.message);
+  }
+}
+
+function setStatus(online){
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  dot.className = 'status-dot '+(online?'online':'offline');
+  txt.textContent = online ? 'Connecté en temps réel' : 'Hors ligne';
+}
+
+// ══════════════════════════════════════════════════
+// REALTIME LISTENERS
+// ══════════════════════════════════════════════════
+function startListening(){
+  // Participants
+  const pRef = ref(db,'participants');
+  onValue(pRef, snap => {
+    const data = snap.val() || {};
+    const participants = Object.entries(data).map(([k,v])=>({...v,_key:k}));
+    renderParticipantList(participants, false);
+    renderParticipantList(participants, true);
+  }, err => setStatus(false));
+
+  // Pairs
+  const pairsRef = ref(db,'pairs');
+  onValue(pairsRef, snap => {
+    const data = snap.val();
+    if(data && Array.isArray(data) && data.length > 0){
+      _pairs = data;
+      showDrawResults(data);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════
+// MODE
+// ══════════════════════════════════════════════════
+window.setMode = function(m){
+  document.getElementById('viewParticipant').style.display = m==='participant'?'':'none';
+  document.getElementById('viewAdmin').style.display       = m==='admin'?'':'none';
+  document.getElementById('modeParticipant').classList.toggle('active',m==='participant');
+  document.getElementById('modeAdmin').classList.toggle('active',m==='admin');
+};
+
+// ══════════════════════════════════════════════════
+// PARTICIPANT REGISTRATION
+// ══════════════════════════════════════════════════
+window.onNameInput = function(){
+  const v = document.getElementById('participantName').value.trim();
+  document.getElementById('btnRegister').disabled = v.length < 2;
+  hideAlerts('regError','regSuccess');
+};
+
+window.registerParticipant = async function(){
+  if(!db) return;
+  const name = document.getElementById('participantName').value.trim();
+  if(name.length < 2) return;
+
+  hideAlerts('regError','regSuccess');
+
+  // Check duplicate
+  const snap = await get(ref(db,'participants'));
+  const existing = snap.val() || {};
+  const duplicate = Object.values(existing).some(p => p.name.toLowerCase()===name.toLowerCase());
+  if(duplicate){
+    showAlert('regError', `"${name}" est déjà inscrit(e) ! Vérifiez votre prénom.`);
+    return;
+  }
+
+  // Push to Firebase
+  try{
+    await push(ref(db,'participants'), { name, ts: new Date().toISOString() });
+    document.getElementById('participantName').value='';
+    document.getElementById('btnRegister').disabled=true;
+    showAlert('regSuccess',`✅ Bravo ${name} ! Tu es inscrit(e). Confirme par WhatsApp à l'organisateur 📲`);
+  } catch(e){
+    showAlert('regError','❌ Erreur lors de l\'inscription : '+e.message);
+  }
+};
+
+// ══════════════════════════════════════════════════
+// RENDER PARTICIPANT LIST
+// ══════════════════════════════════════════════════
+function renderParticipantList(participants, isAdmin){
+  const count = participants.length;
+  const pct = TOTAL_EXPECTED>0 ? Math.round(count/TOTAL_EXPECTED*100) : 0;
+
+  if(!isAdmin){
+    // Participant view: show count only, no names
+    document.getElementById('progText').textContent = `${count} inscrit${count!==1?'s':''}`;
+    document.getElementById('progPct').textContent  = TOTAL_EXPECTED>0 ? `${count} / ${TOTAL_EXPECTED}` : '';
+    document.getElementById('progFill').style.width = Math.min(pct,100)+'%';
+    const numEl = document.getElementById('countNumber');
+    if(numEl) numEl.textContent = count;
+  } else {
+    document.getElementById('adminProgText').textContent = `${count} inscrit${count!==1?'s':''}${TOTAL_EXPECTED>0?' / '+TOTAL_EXPECTED+' attendus':''}`;
+    document.getElementById('adminProgPct').textContent  = TOTAL_EXPECTED>0 ? `${pct}%` : '';
+    document.getElementById('adminProgFill').style.width = Math.min(pct,100)+'%';
+    const list = document.getElementById('adminParticipantList');
+    list.innerHTML = count===0
+      ? '<div class="empty-state">Aucun participant inscrit pour le moment.</div>'
+      : participants.map((p,i)=>`
+          <div class="p-chip">
+            <div class="dot"></div>
+            <div style="font-size:.75rem;color:var(--muted);min-width:20px">${i+1}</div>
+            <div class="p-name">${esc(p.name)}</div>
+            <div class="p-time">${fmtTime(p.ts)}</div>
+            <button class="del-btn" onclick="deleteParticipant('${esc(p._key)}','${esc(p.name)}')">✕</button>
+          </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ADMIN LOGIN
+// ══════════════════════════════════════════════════
+window.doAdminLogin = function(){
+  const pwd = document.getElementById('adminPwd').value;
+  if(pwd===ADMIN_PWD){
+    document.getElementById('adminLogin').style.display='none';
+    document.getElementById('adminDashboard').style.display='';
+  } else {
+    showAlert('loginError','❌ Mot de passe incorrect.');
+  }
+};
+
+// ══════════════════════════════════════════════════
+// DELETE / CLEAR
+// ══════════════════════════════════════════════════
+window.deleteParticipant = async function(key, name){
+  if(!confirm(`Supprimer "${name}" de la liste ?`)) return;
+  try{ await remove(ref(db,`participants/${key}`)); }
+  catch(e){ alert('Erreur : '+e.message); }
+};
+
+window.clearAll = async function(){
+  if(!confirm('⚠️ Réinitialiser toute la liste et les paires ? Action irréversible.')) return;
+  try{
+    await remove(ref(db,'participants'));
+    await remove(ref(db,'pairs'));
+    document.getElementById('drawResults').style.display='none';
+    document.getElementById('orbWrap').style.display='';
+    document.getElementById('waSection').style.display='none';
+    document.querySelector('.orb').style.pointerEvents='';
+  } catch(e){ alert('Erreur : '+e.message); }
+};
+
+// ══════════════════════════════════════════════════
+// DRAW ALGORITHM
+// ══════════════════════════════════════════════════
+function drawPairs(names){
+  for(let a=0;a<1000;a++){
+    const r=[...names];
+    for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}
+    if(r.every((v,i)=>v!==names[i])) return names.map((g,i)=>({giver:g,receiver:r[i]}));
+  }
+  return null;
+}
+
+window.executeDraw = async function(){
+  if(!db) return;
+  const snap = await get(ref(db,'participants'));
+  const data = snap.val()||{};
+  const participants = Object.values(data);
+  if(participants.length<3){ alert('Il faut au moins 3 participants !'); return; }
+
+  document.querySelector('.orb').style.pointerEvents='none';
+  document.getElementById('drawSpinner').classList.add('show');
+
+  setTimeout(async ()=>{
+    const names = participants.map(p=>p.name);
+    const pairs = drawPairs(names);
+    document.getElementById('drawSpinner').classList.remove('show');
+    if(!pairs){ alert('Impossible de générer un tirage valide. Réessayez.'); return; }
+    try{
+      await set(ref(db,'pairs'), pairs);
+      launchConfetti();
+    } catch(e){ alert('Erreur lors de l\'enregistrement : '+e.message); }
+  },1400);
+};
+
+window.redraw = async function(){
+  if(!confirm('Relancer un nouveau tirage ? Les paires actuelles seront effacées.')) return;
+  await remove(ref(db,'pairs'));
+  document.getElementById('drawResults').style.display='none';
+  document.getElementById('orbWrap').style.display='';
+  document.getElementById('waSection').style.display='none';
+  document.querySelector('.orb').style.pointerEvents='';
+};
+
+// ══════════════════════════════════════════════════
+// RENDER RESULTS
+// ══════════════════════════════════════════════════
+function showDrawResults(pairs){
+  _pairs = pairs;
+  document.getElementById('orbWrap').style.display='none';
+  document.getElementById('drawResults').style.display='';
+  document.getElementById('waSection').style.display='';
+
+  document.getElementById('pairsList').innerHTML = pairs.map((p,i)=>`
+    <div class="pair-card" style="animation-delay:${i*35}ms">
+      <span class="pair-num">${i+1}</span>
+      <span class="pair-giver">👤 ${esc(p.giver)}</span>
+      <span class="pair-arr">→</span>
+      <span class="pair-recv">${esc(p.receiver)} 🎁</span>
+      <button class="pair-cp" onclick="copyPairMsg(${i},this)">📋</button>
+    </div>`).join('');
+
+  document.getElementById('waList').innerHTML = pairs.map((p,i)=>`
+    <div style="margin-bottom:18px">
+      <div style="font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:6px">
+        Message pour <strong style="color:var(--text)">${esc(p.giver)}</strong>
+      </div>
+      <div class="wa-msg">${esc(buildMsg(p.giver,p.receiver)).replace(/\n/g,'<br>')}</div>
+      <div class="wa-actions">
+        <button class="btn-copy" onclick="copyWa(${i},this)">📋 Copier</button>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// MESSAGE
+// ══════════════════════════════════════════════════
+function buildMsg(giver, receiver){
+  return `🚴 Amis Invisibles — Balade Petpenoun 🎁\n\nBonjour ${giver} !\n\nTu as participé au tirage au sort… et le sort t'a désigné(e) pour offrir un cadeau à :\n\n✨ ${receiver} ✨\n\nPrépare avec cœur ce souvenir qui restera gravé bien après que les vélos seront rangés. 🌟\n\n(Message confidentiel — garde le secret jusqu'au grand moment ! 🤫)`;
+}
+
+window.copyPairMsg = function(i,btn){
+  const p=_pairs[i];
+  navigator.clipboard.writeText(buildMsg(p.giver,p.receiver)).then(()=>{
+    btn.textContent='✅'; setTimeout(()=>btn.textContent='📋',2000);
+  });
+};
+window.copyWa = function(i,btn){
+  const p=_pairs[i];
+  navigator.clipboard.writeText(buildMsg(p.giver,p.receiver)).then(()=>{
+    const o=btn.textContent; btn.textContent='✅ Copié !'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent=o; btn.classList.remove('copied'); },2500);
+  });
+};
+window.copyAll = function(){
+  const text=(_pairs||[]).map((p,i)=>`${i+1}. ${p.giver} → ${p.receiver}`).join('\n');
+  navigator.clipboard.writeText(`🚴 Amis Invisibles — Petpenoun\n\n${text}`).then(()=>{
+    const btn=document.getElementById('btnCopyAll');
+    btn.textContent='✅ Copié !'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='📋 Tout copier'; btn.classList.remove('copied'); },2500);
+  });
+};
+
+// ══════════════════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════════════════
+function launchConfetti(){
+  const cols=['#f5c842','#ffaa30','#f06292','#4dd0c4','#ce93d8','#fff'];
+  for(let i=0;i<70;i++) setTimeout(()=>{
+    const el=document.createElement('div'); el.className='confetti-piece';
+    el.style.cssText=`left:${10+Math.random()*80}%;top:0;background:${cols[Math.floor(Math.random()*cols.length)]};--dur:${1.5+Math.random()*2}s;border-radius:${Math.random()>.5?'50%':'2px'}`;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4000);
+  },i*40);
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+tryLoadSavedConfig();
+</script>
+</body>
+</html>
