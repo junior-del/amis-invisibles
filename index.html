@@ -162,6 +162,14 @@
 
   .gap{height:14px}
   @media(max-width:480px){.pairs-grid{grid-template-columns:1fr}.card{padding:18px}}
+
+  /* GENRE BUTTONS */
+  .genre-btn{flex:1;padding:12px;border:2px solid var(--border);border-radius:11px;
+    background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;
+    font-size:.95rem;font-weight:500;cursor:pointer;transition:all .2s;text-align:center}
+  .genre-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(245,200,66,.05)}
+  .genre-btn.selected-f{border-color:var(--pink);background:rgba(240,98,146,.12);color:var(--pink);font-weight:700}
+  .genre-btn.selected-m{border-color:var(--teal);background:rgba(77,208,196,.12);color:var(--teal);font-weight:700}
 </style>
 </head>
 <body>
@@ -175,7 +183,7 @@
   <div class="hdr">
     <div class="hdr-bike">🚴</div>
     <h1>Amis Invisibles</h1>
-    <p>Balade à Vélo · Domaine de Petpenoun · 14-16 Mai 2026</p>
+    <p>Balade à Vélo · Domaine de Petpenoun · 15 Mai 2026</p>
   </div>
 
   <!-- FIREBASE SETUP BANNER (caché après config) -->
@@ -228,6 +236,18 @@
         <input type="text" id="participantName" placeholder="Votre prénom…" maxlength="40"
           oninput="onNameInput()" onkeydown="if(event.key==='Enter')registerParticipant()"
           pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s\-]+" title="Le prénom ne doit contenir que des lettres">
+        <div class="gap"></div>
+        <input type="email" id="participantEmail" placeholder="Votre adresse email…"
+          oninput="onNameInput()">
+        <div class="gap"></div>
+        <div style="display:flex;gap:10px">
+          <button class="genre-btn" id="btnF" onclick="selectGenre('F')" type="button">
+            👩 Féminin
+          </button>
+          <button class="genre-btn" id="btnM" onclick="selectGenre('M')" type="button">
+            👨 Masculin
+          </button>
+        </div>
         <div class="gap"></div>
         <button class="btn btn-gold" id="btnRegister" onclick="registerParticipant()" disabled>
           🎁 Je m'inscris !
@@ -461,9 +481,26 @@ window.setMode = function(m){
 // ══════════════════════════════════════════════════
 // PARTICIPANT REGISTRATION
 // ══════════════════════════════════════════════════
+// Track selected genre
+let selectedGenre = null;
+
+window.selectGenre = function(g){
+  selectedGenre = g;
+  document.getElementById('btnF').className = g==='F' ? 'genre-btn selected-f' : 'genre-btn';
+  document.getElementById('btnM').className = g==='M' ? 'genre-btn selected-m' : 'genre-btn';
+  checkFormValid();
+};
+
+function checkFormValid(){
+  const field = document.getElementById('participantName');
+  const email = document.getElementById('participantEmail').value.trim();
+  const name  = field.value.trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  document.getElementById('btnRegister').disabled = name.length < 2 || !emailOk || !selectedGenre;
+}
+
 window.onNameInput = function(){
   const field = document.getElementById('participantName');
-  // Remove any character that is not a letter, space or hyphen (including accented chars)
   const cleaned = field.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\-]/g, '');
   if(field.value !== cleaned){
     field.value = cleaned;
@@ -471,8 +508,7 @@ window.onNameInput = function(){
   } else {
     hideAlerts('regError','regSuccess');
   }
-  const v = cleaned.trim();
-  document.getElementById('btnRegister').disabled = v.length < 2;
+  checkFormValid();
 };
 
 window.registerParticipant = async function(){
@@ -528,7 +564,8 @@ function renderParticipantList(participants, isAdmin){
             <div class="dot"></div>
             <div style="font-size:.75rem;color:var(--muted);min-width:20px">${i+1}</div>
             <div class="p-name">${esc(p.name)}</div>
-            <div class="p-time">${fmtTime(p.ts)}</div>
+            <span style="font-size:.72rem;padding:1px 7px;border-radius:10px;font-weight:600;background:${p.genre==='F'?'rgba(240,98,146,.15)':'rgba(77,208,196,.15)'};color:${p.genre==='F'?'var(--pink)':'var(--teal)'};">${p.genre==='F'?'👩 F':'👨 M'}</span>
+            <div class="p-time" style="font-size:.7rem">${esc(p.email||'')} · ${fmtTime(p.ts)}</div>
             <button class="del-btn" onclick="deleteParticipant('${esc(p._key)}','${esc(p.name)}')">✕</button>
           </div>`).join('');
   }
@@ -569,15 +606,51 @@ window.clearAll = async function(){
 };
 
 // ══════════════════════════════════════════════════
-// DRAW ALGORITHM
+// DRAW ALGORITHM — Mixed gender priority
+// Girls give to boys, boys give to girls.
+// If unequal numbers, remaining are paired among themselves.
 // ══════════════════════════════════════════════════
-function drawPairs(names){
-  for(let a=0;a<1000;a++){
-    const r=[...names];
-    for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}
-    if(r.every((v,i)=>v!==names[i])) return names.map((g,i)=>({giver:g,receiver:r[i]}));
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function drawPairs(participants){
+  const girls = shuffle(participants.filter(p=>p.genre==='F'));
+  const boys  = shuffle(participants.filter(p=>p.genre==='M'));
+  const pairs = [];
+
+  // Mixed pairs first: shortest list determines count
+  const mixedCount = Math.min(girls.length, boys.length);
+  const girlsUsed  = girls.slice(0, mixedCount);
+  const boysUsed   = boys.slice(0, mixedCount);
+
+  // Girls → Boys
+  girlsUsed.forEach((g,i) => pairs.push({ giver:g.name, giverGenre:'F', receiver:boysUsed[i].name, receiverGenre:'M' }));
+  // Boys → Girls
+  boysUsed.forEach((b,i)  => pairs.push({ giver:b.name, giverGenre:'M', receiver:girlsUsed[i].name, receiverGenre:'F' }));
+
+  // Remaining participants (same gender overflow) — derangement
+  const remaining = [...girls.slice(mixedCount), ...boys.slice(mixedCount)];
+  if(remaining.length >= 2){
+    for(let attempt=0; attempt<1000; attempt++){
+      const r = shuffle(remaining);
+      if(r.every((v,i)=>v.name!==remaining[i].name)){
+        remaining.forEach((p,i)=>pairs.push({ giver:p.name, giverGenre:p.genre, receiver:r[i].name, receiverGenre:r[i].genre }));
+        break;
+      }
+    }
+  } else if(remaining.length===1){
+    // Only 1 left — pair with a random person from existing pairs (swap receiver)
+    const lonely = remaining[0];
+    const randIdx = Math.floor(Math.random()*pairs.length);
+    pairs.push({ giver:lonely.name, giverGenre:lonely.genre, receiver:pairs[randIdx].receiver, receiverGenre:pairs[randIdx].receiverGenre });
+    pairs[randIdx].receiver = lonely.name;
+    pairs[randIdx].receiverGenre = lonely.genre;
   }
-  return null;
+
+  return pairs;
 }
 
 window.executeDraw = async function(){
@@ -591,8 +664,7 @@ window.executeDraw = async function(){
   document.getElementById('drawSpinner').classList.add('show');
 
   setTimeout(async ()=>{
-    const names = participants.map(p=>p.name);
-    const pairs = drawPairs(names);
+    const pairs = drawPairs(participants);
     document.getElementById('drawSpinner').classList.remove('show');
     if(!pairs){ alert('Impossible de générer un tirage valide. Réessayez.'); return; }
     try{
