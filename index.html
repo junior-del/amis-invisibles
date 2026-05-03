@@ -183,7 +183,7 @@
   <div class="hdr">
     <div class="hdr-bike">🚴</div>
     <h1>Amis Invisibles</h1>
-    <p>Balade à Vélo · Domaine de Petpenoun · 14 - 16 Mai 2026</p>
+    <p>Balade à Vélo · Domaine de Petpenoun · 15 Mai 2026</p>
   </div>
 
   <!-- FIREBASE SETUP BANNER (caché après config) -->
@@ -606,9 +606,8 @@ window.clearAll = async function(){
 };
 
 // ══════════════════════════════════════════════════
-// DRAW ALGORITHM — Mixed gender priority
-// Girls give to boys, boys give to girls.
-// If unequal numbers, remaining are paired among themselves.
+// DRAW ALGORITHM — Simple fast derangement
+// No one draws themselves. Instant for any group size.
 // ══════════════════════════════════════════════════
 function shuffle(arr){
   const a=[...arr];
@@ -617,40 +616,16 @@ function shuffle(arr){
 }
 
 function drawPairs(participants){
-  const girls = shuffle(participants.filter(p=>p.genre==='F'));
-  const boys  = shuffle(participants.filter(p=>p.genre==='M'));
-  const pairs = [];
+  const names = participants.map(p=>p.name);
+  const n = names.length;
 
-  // Mixed pairs first: shortest list determines count
-  const mixedCount = Math.min(girls.length, boys.length);
-  const girlsUsed  = girls.slice(0, mixedCount);
-  const boysUsed   = boys.slice(0, mixedCount);
-
-  // Girls → Boys
-  girlsUsed.forEach((g,i) => pairs.push({ giver:g.name, giverGenre:'F', receiver:boysUsed[i].name, receiverGenre:'M' }));
-  // Boys → Girls
-  boysUsed.forEach((b,i)  => pairs.push({ giver:b.name, giverGenre:'M', receiver:girlsUsed[i].name, receiverGenre:'F' }));
-
-  // Remaining participants (same gender overflow) — derangement
-  const remaining = [...girls.slice(mixedCount), ...boys.slice(mixedCount)];
-  if(remaining.length >= 2){
-    for(let attempt=0; attempt<1000; attempt++){
-      const r = shuffle(remaining);
-      if(r.every((v,i)=>v.name!==remaining[i].name)){
-        remaining.forEach((p,i)=>pairs.push({ giver:p.name, giverGenre:p.genre, receiver:r[i].name, receiverGenre:r[i].genre }));
-        break;
-      }
-    }
-  } else if(remaining.length===1){
-    // Only 1 left — pair with a random person from existing pairs (swap receiver)
-    const lonely = remaining[0];
-    const randIdx = Math.floor(Math.random()*pairs.length);
-    pairs.push({ giver:lonely.name, giverGenre:lonely.genre, receiver:pairs[randIdx].receiver, receiverGenre:pairs[randIdx].receiverGenre });
-    pairs[randIdx].receiver = lonely.name;
-    pairs[randIdx].receiverGenre = lonely.genre;
+  // Sattolo cycle — guaranteed derangement in O(n), always instant
+  const result = [...names];
+  for(let i=n-1;i>0;i--){
+    const j=Math.floor(Math.random()*i); // j strictly < i → guaranteed derangement
+    [result[i],result[j]]=[result[j],result[i]];
   }
-
-  return pairs;
+  return names.map((giver,i)=>({ giver, receiver:result[i] }));
 }
 
 window.executeDraw = async function(){
@@ -664,7 +639,7 @@ window.executeDraw = async function(){
   document.getElementById('drawSpinner').classList.add('show');
 
   setTimeout(async ()=>{
-    const pairs = drawPairs(participants);
+    const pairs = drawPairs(participants); // participants array with .name property
     document.getElementById('drawSpinner').classList.remove('show');
     if(!pairs){ alert('Impossible de générer un tirage valide. Réessayez.'); return; }
     try{
